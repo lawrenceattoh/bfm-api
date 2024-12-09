@@ -2,7 +2,7 @@ from app.models._query_manager import AbstractQueryManager
 
 
 class WorkQueryManager(AbstractQueryManager):
-    _order_key = 'wrk.name'
+    # _order_key = 'wrk.name'
 
     _create = (
         'with case when $params.iswc is null then \'223336\' else $params.iswc end as iswc '
@@ -119,7 +119,7 @@ class WorkQueryManager(AbstractQueryManager):
 
     def _return(self):
         return (
-            'with distinct wrk '
+            'with wrk '
             'optional match (wrk)-[:ROYALTY_SHARE]-(ip:IpChain)-[ws:WRITER_SHARE]-(w:Writer)'
             'optional match (wrk)-[:ROYALTY_SHARE]-(ip:IpChain)-[ps:PUBLISHER_SHARE]-(p:Publisher)'
             'return '

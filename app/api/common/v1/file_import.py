@@ -98,7 +98,7 @@ async def load_file(file: UploadFile = File(),
                     deal_id: str = Form(),  # TODO: Update
                     right_type: PublishingRightsType = Form(),
                     is_controlled: bool = Form(),
-                    territories: List[str] | None = Form(None),
+                    territories: List[str] = Form(...),
                     calculate_mech_share: bool = Form(False),
                     reversion_date: datetime.date = Form(None),
                     rms_user=Depends(get_user)):
@@ -113,6 +113,7 @@ async def load_file(file: UploadFile = File(),
                          is_controlled=is_controlled,
                          reversion_date=reversion_date
                          )
+    print(territories, 'i am territories')
     res = run_import(main_copyright_type, data, rms_user)
     return 1
 

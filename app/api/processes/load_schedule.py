@@ -234,11 +234,11 @@ with w, wrk, d, row, c
     merge (d)-[:PURCHASED_ASSET]->(wrk)
     merge (d)-[:DEAL_TYPE]->(c)
     merge (wrk)<-[:ROYALTY_SHARE]-(ip: IpChain)
-    //merge (w)-[ws:WRITER_SHARE]->(ip)
+    merge (w)-[ws:WRITER_SHARE]->(ip)
 
 with *
 match (p:Publisher {ipi: '1133481777'})
-WITH w, wrk, d, row, ip, p
+WITH w, wrk, d, row, ip, p, ws
 CALL (*) {
     foreach (_ in case when row.right_type = 'publisher_share' then [1] else [] end |
         merge (p)-[ps:PUBLISHER_SHARE]->(ip)
@@ -251,7 +251,7 @@ CALL (*) {
 
     ))
     foreach (_ in case when row.right_type = 'writer_share' then [1] else [] end |
-        merge (w)-[ws:WRITER_SHARE]->(ip)
+        //merge (w)-[ws:WRITER_SHARE]->(ip)
         set 
             ws.perf_share = tofloat(row.ownership_pcnt), 
             ws.deal_id = d.id 
