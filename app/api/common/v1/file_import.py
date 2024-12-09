@@ -95,24 +95,21 @@ class RightsScope(Enum):
 
 @router.post('/schedule/publishing')
 async def load_file(file: UploadFile = File(),
-                    deal_name: str = Form(),
-                    completed_date: datetime.date = Form(),
+                    deal_id: str = Form(),  # TODO: Update
                     right_type: PublishingRightsType = Form(),
                     is_controlled: bool = Form(),
                     territories: List[str] | None = Form(None),
-                    mech_share: float = Form(None),
+                    calculate_mech_share: bool = Form(False),
                     reversion_date: datetime.date = Form(None),
                     rms_user=Depends(get_user)):
     main_copyright_type = 'publishing'
     file_content = await file.read()
     file_content_string = file_content.decode('utf-8-sig')
     data = read_csv_file(file_content_string,
-                         deal_name=deal_name,
-                         completed_date=completed_date,
-                         main_copyright=main_copyright_type,
+                         deal_id=deal_id,
                          right_type=right_type.value,
                          territories=territories,
-                         mech_share=mech_share,
+                         calculate_mech_share=calculate_mech_share,
                          is_controlled=is_controlled,
                          reversion_date=reversion_date
                          )

@@ -59,10 +59,8 @@ class AbstractQueryManager(AQMBase, ABC):
             {self.alias}.updated_by = $rms_user,
             {self.alias}.updated_at = datetime(),
             {self.alias}.create_method = 'user generated',
-            {self.alias}.status = 'unvalidated'
+            {self.alias}.status = case when {self.alias}.status is null then 'unvalidated' else {self.alias}.status end
         """
-
-
 
     @property
     def _update(self) -> str:
@@ -96,7 +94,7 @@ class AbstractQueryManager(AQMBase, ABC):
         ])
 
     def read_one(self) -> str:
-        return "\n".join([self._read_one, self._return()])
+        return "\n".join([self._read_one, self._search, self._return()])
 
     def read_all(self) -> str:
         return "\n".join([self._read_all, self._search, self._return()])

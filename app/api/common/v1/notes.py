@@ -19,7 +19,7 @@ class Note(BaseModel):
     created_by: str
     created_at: datetime.datetime
 
-    @field_validator('created_at', mode='plain')
+    @field_validator('created_at', mode='before')
     @classmethod
     def convert_neo4j_datetime_(cls, value):
         if isinstance(value, (neo4j.time.DateTime,)):
@@ -53,7 +53,11 @@ NoteSearchParams = Annotated[dict, Depends(note_search_params)]
 
 @router.get("/", response_model=Notes)
 async def get_notes(params: NoteSearchParams):
+    print()
+    print(get_notes_query())
+    print(params)
     result, schema = db.cypher_query(get_notes_query(), params=params)
+    print(result)
     return Notes(notes=_base.parse_neo_response(result, schema, is_many=True))
 
 

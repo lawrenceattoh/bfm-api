@@ -51,11 +51,29 @@ CALL apoc.custom.installProcedure(
     'WRITE'
 );'''
 
+create_bfm_publisher = '''
+merge (p:Publisher {name: 'BELLA FIGURA MUSIC', ipi: '1133481777'})
+with p
+    call custom.addNodeId(p, 'PUB') yield node as _pub 
+return p
+'''
+
+
+# CREATE FULLTEXT INDEX dealSearchIndex
+# FOR (n:Deal)
+# ON EACH [n.name,n.id]
+
+
+# create index for (n:BusinessEntity) ON (n.id, n.name)
+
+
+
 
 def init_procedures():
     print('running init procedures')
     db.cypher_query(proc_generate_node_id)
     db.cypher_query(proc_generate_custom_id)
+    db.cypher_query(create_bfm_publisher)
 
 
 # fb = initialize_app()

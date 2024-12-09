@@ -2,16 +2,7 @@ from app.models._query_manager import AbstractQueryManager
 
 
 class WorkQueryManager(AbstractQueryManager):
-    _delete = ('match (wrk: Work) set wrk.name = "DELETED_" + wrk.name, '
-               'wrk.is_deleted =True, '
-               'wrk.deleted_at = datetime(), '
-               'wrk.updated_at = datetime(), '
-               'wrk,updated_by = $rms_user')
-
-    _read_all_count = 'return count(distinct wrk.id)'
     _order_key = 'wrk.name'
-    _read_all = 'match (wrk: Work {is_deleted:False})'
-    _read_one = 'match (wrk: Work {id: $params.id})'
 
     _create = (
         'with case when $params.iswc is null then \'223336\' else $params.iswc end as iswc '
@@ -20,23 +11,6 @@ class WorkQueryManager(AbstractQueryManager):
         'wrk.iswc = case when $params.iswc <> \'\' then $params.iswc else null end, '
         'wrk.reversion_date = case when $params.reversion_date <> \'\' then $params.reversion_date else null end, '
         'wrk.territories = case when $params.territories <> \'\' then $params.territories else null end'
-    )
-
-    _create_id = (
-        'with wrk '
-        'call custom.addNodeId(wrk, \'WRK\') yield node as _w '
-        'with wrk'
-    )
-
-    _set = (
-        'set '
-        'wrk.is_deleted = false,'
-        'wrk.created_by = case when wrk.created_by is null then $rms_user else wrk.created_by end,'
-        'wrk.created_at = case when wrk.created_at is null then datetime() else wrk.created_at end,'
-        'wrk.updated_at = datetime(),'
-        'wrk.updated_by = $rms_user,'
-        'wrk.create_method = \'user generated\','
-        'wrk.status = \'unvalidated\''
     )
 
     _create_links = (
@@ -60,12 +34,6 @@ class WorkQueryManager(AbstractQueryManager):
         ')'
     )
 
-    _update = (
-        'set wrk += $params.node_params, '
-        'wrk.updated_at = datetime(), '
-        'wrk.updated_by = $rms_user'
-    )
-
     _search = (
         'WITH wrk '
         'OPTIONAL MATCH (wrk)-[:ROYALTY_SHARE]-(ip:IpChain)-[:WRITER_SHARE]-(w:Writer) '
@@ -77,7 +45,7 @@ class WorkQueryManager(AbstractQueryManager):
         ')'
     )
 
-    _update_links = '''
+    _with_relations = '''
         with wrk 
         call {
             match (wrk)-[pa:PURCHASED_ASSET]-(existingDeal: Deal)

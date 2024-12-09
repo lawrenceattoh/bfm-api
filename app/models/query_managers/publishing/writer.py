@@ -2,18 +2,25 @@ from app.models._query_manager import AbstractQueryManager
 
 
 class WriterQueryManager(AbstractQueryManager):
-    _read_one = 'match (w:Writer {id: $params.id})'
-    _read_all = 'match (w: Writer {is_deleted:False})'
-    _delete = ('match (wri: Writer) set wri.name = "DELETED_" + wri.name, '
-               'wri.is_deleted =True, '
-               'wri.deleted_at = datetime(), '
-               'wri.updated_at = datetime(), '
-               'updated_by = $rms_user')
-    _search = ('where '
-               '(tolower(w.name) contains tolower($params.name) or $params.name is null) and '
-               '(w.ipi = $params.ipi or $params.ipi is null)')
 
-    _read_all_count = 'return count(distinct w.id)'
+    def __init__(self):
+        super().__init__(alias='w', _id='WRI', label='Writer')
+
+    _read_one = 'match (w:Writer {id: $params.id})'
+
+    # _read_all = 'match (w: Writer {is_deleted:False})'
+    # _delete = ('match (wri: Writer) set wri.name = "DELETED_" + wri.name, '
+    #            'wri.is_deleted =True, '
+    #            'wri.deleted_at = datetime(), '
+    #            'wri.updated_at = datetime(), '
+    #            'updated_by = $rms_user')
+    @property
+    def _search(self):
+        return '''where 
+               (tolower(w.name) contains tolower($params.name) or $params.name is null) and 
+               (w.ipi = $params.ipi or $params.ipi is null)'''
+
+    # _read_all_count = 'return count(distinct w.id)'
 
     _create = (
         'with case when $params.ipi is null then \'223336\' else $params.ipi end as ipi '

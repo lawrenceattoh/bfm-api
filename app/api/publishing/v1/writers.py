@@ -31,6 +31,7 @@ WriterSearchParams = Annotated[dict, Depends(writer_search_params)]
 @router.get('/')
 async def get_writers(search_params: WriterSearchParams, pagination_params: PaginationParams):
     writers, row_count = ModelWriter.read_all(search_params=search_params, pagination_params=pagination_params)
+    print(writers)
     if writers:
         return MultiWriterResponse(writers=writers, rowCount=row_count,
                                    limit=min(int(pagination_params.get('limit')), row_count),

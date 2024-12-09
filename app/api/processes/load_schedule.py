@@ -205,6 +205,77 @@ with wrk, w
 return w
 """
 
+publishing_loadquery_new = """
+
+UNWIND $rows AS row
+with case when 
+    row.iswc is null 
+    then '223336'
+    else row.iswc 
+    end as iswc, row
+
+match (d: Deal {id: row.deal_id}) // Must be created before the schedule is loaded
+
+
+merge (c: MainCopyrightType {name: 'publishing'})
+merge (w: Writer {name: row.name, alias: row.alias, ipi:row.ipi})
+merge (wrk: Work {name: row.title, _shadow_iswc: iswc, _deal: row.deal_id}) 
+on create set 
+    wrk.iswc = case when row.iswc <> '' then row.iswc else null end, 
+    wrk.reversion_date = case when row.reversion_date <> '' then row.reversion_date else null end,  
+    wrk.territories = case when row.territories <> '' then row.territories else null end 
+
+with d, w, wrk, row,c
+call custom.addNodeId(w, 'WRI') yield node as _w
+call custom.addNodeId(wrk, 'WRK') yield node as _wrk
+
+
+with w, wrk, d, row, c
+    merge (d)-[:PURCHASED_ASSET]->(wrk)
+    merge (d)-[:DEAL_TYPE]->(c)
+    merge (wrk)<-[:ROYALTY_SHARE]-(ip: IpChain)
+    //merge (w)-[ws:WRITER_SHARE]->(ip)
+
+with *
+match (p:Publisher {ipi: '1133481777'})
+WITH w, wrk, d, row, ip, p
+CALL (*) {
+    foreach (_ in case when row.right_type = 'publisher_share' then [1] else [] end |
+        merge (p)-[ps:PUBLISHER_SHARE]->(ip)
+        set ps.perf_share = tofloat(row.ownership_pcnt), 
+        ps.is_controlled = row.is_controlled, 
+        ps.deal_id = d.id 
+
+        foreach(_ in case when row.is_controlled then [1] else [] end |
+            set ip.mechanical_share = tofloat(row.ownership_pcnt) * 2
+
+    ))
+    foreach (_ in case when row.right_type = 'writer_share' then [1] else [] end |
+        merge (w)-[ws:WRITER_SHARE]->(ip)
+        set 
+            ws.perf_share = tofloat(row.ownership_pcnt), 
+            ws.deal_id = d.id 
+
+    )
+    return null as  _
+}
+
+with distinct w, wrk
+    unwind [w, wrk] as node
+set
+    node.is_deleted = false,
+    node.created_by = case when node.created_by is null then $rms_user else node.created_by end,
+    node.created_at = case when node.created_at is null then datetime() else node.created_at end,
+    node.updated_at = datetime(),
+    node.updated_by = $rms_user,
+    node.status = 'validated', 
+    node.create_method = 'bulk file import'
+
+with wrk, w
+
+return w
+"""
+
 
 def masters_load_schedule_into_db(rows, rms_user):
     print(masters_loadquery)

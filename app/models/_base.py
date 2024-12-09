@@ -78,10 +78,11 @@ class AbstractNode(ABC):
         row_count = row_count_result[0][0]
 
         q = self.query_manager.read_all()
+
         pq = jinja2.Template(_add_pagination).render(
             q=q, order_key=f'{self.query_manager.alias}.{self.order_key}', **pagination_params
         )
-
+        print(pq)
         result, schema = neodb.cypher_query(pq, {'params': search_params})
         response = parse_neo_response(result, schema, is_many=True)
 

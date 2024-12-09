@@ -114,7 +114,7 @@ class Attachment(BaseModel):
     uploaded_by: str
     uploaded_at: datetime.datetime
 
-    @field_validator('created_at', 'uploaded_at', mode='plain')
+    @field_validator('created_at', 'uploaded_at', mode='before')
     @classmethod
     def validate_date_fields(cls, value):
         return convert_datetime(value)

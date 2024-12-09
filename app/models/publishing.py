@@ -7,6 +7,6 @@ work = type('Work', (AbstractNode,), {'node_alias': 'wrk', 'return_params': ['is
 publisher = type('Publisher', (AbstractNode,),
                  {'node_alias': 'p', 'return_params': ['id', 'name', 'ipi'], 'order_key': 'name'})
 
-ModelWriter = writer(WriterQueryManager(alias='wri', _id='WRI', label='Writer'))
+ModelWriter = writer(WriterQueryManager())
 ModelWork = work(WorkQueryManager(alias='wrk', _id='WRK', label='Work'))
-ModelPublisher = publisher(PublisherQueryManager(alias='pub', _id='PUB', label='Publisher'))
+ModelPublisher = publisher(PublisherQueryManager(alias='p', _id='PUB', label='Publisher'))

@@ -19,13 +19,19 @@ class DealQueryManager(AbstractQueryManager):
         with d 
         where 
             (tolower(d.name) contains tolower($params.name) or $params.name is null)
-        optional match (d)-[:DEAL_TYPE]-(c:Copyright) 
-        where 
-            (c.type in $params.rights_type or $params.rights_type is null)
-        optional match (d)-[:PURCHASED_ASSET]-(wrk:Work)-[:ROYALTY_SHARE]-(:IpChain)-[:WRITER_SHARE]-(wri:Writer)
-        where 
-            (wri.id = $params.writer_id or $params.writer_id is null)
-        with d, c
+            
+        match (d)-[:PARENT_CO]-(be:BusinessEntity)
+        where (be.id = $params.business_entity_id OR $params.business_entity_id is null)
+        
+        with * 
+        call (*) {
+            with d
+            optional match path = (d)-[:PURCHASED_ASSET]-(wrk:Work)-[:ROYALTY_SHARE]-(IpChain)-[:WRITER_SHARE]-(wri:Writer)
+            where wri.id = $params.writer_id or $params.writer_id is null
+            return count(path)> 0 as hasMatchingWriter
+        }
+        with d, be 
+        where $params.writer_id is null or hasMatchingWriter
         '''
 
     @property
@@ -33,26 +39,24 @@ class DealQueryManager(AbstractQueryManager):
         return '''
         with * 
             call (*) {
-                with d, $params.business_group_id as business_group_id
-                where business_group_id is not null 
-                optional match (d)-[existingParentCo:PARENT_CO]-(existingBG:BusinessGroup)
-                with d, existingBG, business_group_id, existingParentCo
-                match (newBG:BusinessGroup {id: business_group_id})
-                foreach (_ in case when business_group_id = existingBG.id then [] else [1] end |
+                with d, $params.business_entity_id as business_entity_id 
+                where business_entity_id is not null 
+                optional match (d)-[existingParentCo:PARENT_CO]-(existingBE:BusinessEntity)
+                with d, existingBE, business_entity_id, existingParentCo
+                match (newBE:BusinessEntity {id: business_entity_id})
+                foreach (_ in case when business_entity_id = existingBE.id then [] else [1] end |
                 delete (existingParentCo)
-                merge (d)<-[:PARENT_CO]-(newBG)
+                merge (d)<-[:PARENT_CO]-(newBE)
                 )
+                return coalesce(newBE, existingBE) as be
             }
         '''
 
     def _return(self) -> str:
         return '''
-        with d 
-        optional match (d)-[:DEAL_TYPE]-(c:Copyright) 
-        optional match (d)-[:PURCHASED_ASSET]-(a) 
         return 
             d.id as id,
             d.name as name,
             d.completed_date as completed_date,
-            collect(distinct c.name) as rights_types, 
+            be.id as business_entity_id,
         ''' + self.add_base_params('d')

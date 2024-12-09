@@ -31,14 +31,14 @@ WorkSearchParams = Annotated[dict, Depends(work_search_params)]
 async def get_works(work_search_params: WorkSearchParams, pagination_params: PaginationParams):
     if works := ModelWork.read_all(search_params=work_search_params, pagination_params=pagination_params):
         w, row_count = works
-        print(row_count)
+        print(w)
         return MultiWorkResponse(works=w, rowCount=row_count, **pagination_params)
     return {'writers': []}
 
 
 @router.get('/{work_id}')
 async def get_work(work_id: str):
-    work = ModelWork.read_one(params={'id': work_id})
+    work = ModelWork.read_one(node_id=work_id)
     return WorkResponse(**work)
 
 

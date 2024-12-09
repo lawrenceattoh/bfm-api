@@ -26,15 +26,15 @@ class PurchasedAssets(BaseModel):
     recordings: Optional[List[Any]] = None
 
 
-class BusinessGroupId(BaseModel):
-    business_group_id: str
+class BusinessEntityId(BaseModel):
+    business_entity_id: str
 
 
-class CreateDeal(BaseDeal, BusinessGroupId):
+class CreateDeal(BaseDeal, BusinessEntityId):
     pass
 
 
-class Deal(BaseNode, BaseDeal, DealId):
+class Deal(BaseNode, BusinessEntityId, BaseDeal, DealId):
     rights_types: List[str] = None
     # assets: PurchasedAssets
 

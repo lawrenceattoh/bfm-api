@@ -27,12 +27,12 @@ class BaseWork(BaseModel):
 
 
 class RightsHolder(BaseModel):
-    deal_id: str
-    id: str
-    name: str
+    deal_id: str | None
+    id: str | None
+    name: str | None
     share: float | None
-    ipi: str
-    internal_ip_ref: int
+    ipi: str | None
+    internal_ip_ref: int | None
 
 
 # class RightsHolder(BaseModel):

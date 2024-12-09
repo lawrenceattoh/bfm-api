@@ -5,7 +5,7 @@
 
 def get_notes_query():
     return '''
-    match (n:Note {entity_id: $entity_id, node_label:$node_label})
+    match (n:Note {entity_id: $entity_id})
     return n.note as note, 
            n.created_by as created_by, 
            n.created_at as created_at

@@ -12,6 +12,7 @@ router = APIRouter(prefix='/v1/deals', tags=['deals'])
 async def deal_search_params(
         _id: Optional[str] = Query(None, description="ID of the deal", alias="id"),
         name: Optional[str] = Query(None, description="Deal name"),
+        business_entity_id: Optional[str] = Query(None, alias="businessEntityId"),
         rights_type: Optional[List[str]] = Query(None, description="Rights type associated with deal",
                                                  alias="rights-type"),
         writer_id: Optional[str] = Query(None, description="Writer ID")
@@ -21,6 +22,7 @@ async def deal_search_params(
         "id": _id,
         "name": name,
         "rights_type": rights_type,
+        "business_entity_id": business_entity_id,
         "writer_id": writer_id
     }
 
@@ -54,6 +56,10 @@ async def get_deal(deal_id: str):
 
 @router.patch('/{deal_id}', response_model=DealResponse)
 async def update_deal(deal_id: str, deal: CreateDeal, rms_user=Depends(get_user)):
-    deal = ModelDeal.update(node_id=deal_id, params={'node_params': deal.model_dump(exclude_unset=True)},
+    business_entity_id = deal.business_entity_id
+    del deal.business_entity_id
+    deal = ModelDeal.update(node_id=deal_id, params={'node_params': deal.model_dump(exclude_unset=True),
+                                                     'business_entity_id': business_entity_id},
                             rms_user=rms_user)
+    print(deal)
     return DealResponse(**deal)
