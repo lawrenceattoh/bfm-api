@@ -1,9 +1,11 @@
 import datetime
 import logging
+import os
 from typing import List
 
 import requests
 from fastapi import APIRouter, File, UploadFile, HTTPException, Form, Depends, Query
+from google.auth import default
 from google.cloud import storage
 from neomodel import db
 from pydantic import BaseModel, field_validator
@@ -16,8 +18,10 @@ from app.schemas.utils import convert_datetime
 router = APIRouter(prefix="/v1/attachments", tags=["attachments"])
 
 BUCKET_NAME = "bfm-digital-master-store"
+sa_email = os.environ.get("SA_EMAIL")
 
-client = storage.Client()
+credentials, project = default()
+client = storage.Client(credentials=credentials)
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +54,10 @@ async def upload_to_gcs(node_label, entity_id, attachment_type, attachment_categ
         storage_path = f"{node_label}/{entity_id}/{attachment_category}/{attachment_type}/{filename}"
         blob = bucket.blob(storage_path)
 
-        signed_url = blob.generate_signed_url(expiration=set_expiry(), method="PUT")
+        signed_url = blob.generate_signed_url(expiration=set_expiry(), method="PUT",
+                                              version="v4",
+                                              service_account_email=credentials.service_account_email,
+                                              access_token=credentials.token)
         res = requests.put(signed_url, data=file.file)
         if res.status_code != 200:
             raise Exception(f"Upload failed for {filename}: {res.content}")

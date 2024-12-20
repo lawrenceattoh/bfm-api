@@ -2,19 +2,15 @@ import logging
 from abc import ABC, abstractmethod
 
 import jinja2
-from neomodel import db, config
+from neomodel import db
 
 from app.models._query_manager import AbstractQueryManager
-
-config.DATABASE_URL = 'bolt://neo4j:password@localhost:7687'
 
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-config.DATABASE_URL = 'bolt://neo4j:password@localhost:7687'
 
 _add_pagination = '''
 {{ q }}
@@ -69,20 +65,17 @@ class AbstractNode(ABC):
         q = self.query_manager.read_one()
         result, schema = neodb.cypher_query(q, {'id': node_id, 'params': params})
         response = parse_neo_response(result, schema)
-        self._log_query("READ_ONE", q, params, response=response)
         return response
 
     def read_all(self, *, neodb=db, search_params: dict = {}, pagination_params: dict = {}):
         read_all_count = self.query_manager.read_all_count()
         row_count_result, _ = neodb.cypher_query(read_all_count, {'params': search_params})
         row_count = row_count_result[0][0]
-
         q = self.query_manager.read_all()
-
+        order_key = f'{self.query_manager.alias}.{self.order_key}' if '.' not in self.order_key else self.order_key
         pq = jinja2.Template(_add_pagination).render(
-            q=q, order_key=f'{self.query_manager.alias}.{self.order_key}', **pagination_params
+            q=q, order_key=f'{order_key}', **pagination_params
         )
-        print(pq)
         result, schema = neodb.cypher_query(pq, {'params': search_params})
         response = parse_neo_response(result, schema, is_many=True)
 
@@ -94,8 +87,8 @@ class AbstractNode(ABC):
         response = parse_neo_response(result, schema)
         return response
 
-    def delete(self, node_id, *, neodb=db):
+    def delete(self, node_id, *, neodb=db, rms_user: str = None):
         q = self.query_manager.delete()
-        result, schema = neodb.cypher_query(q, {'id': node_id})
+        result, schema = neodb.cypher_query(q, {'id': node_id, 'rms_user': rms_user})
         response = parse_neo_response(result, schema)
         return response

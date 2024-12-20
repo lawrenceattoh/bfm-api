@@ -17,9 +17,9 @@ class AQMBase(ABC):
         '''
         return Template(template).render(alias=alias, params=self._base_params)
 
-    @staticmethod
-    def with_pagination(offset: int, limit: int, order: str, order_key: str) -> str:
-        return f"skip {offset} limit {limit} order by {order_key} {order}"
+    # @staticmethod
+    # def with_pagination(offset: int, limit: int, order: str, order_key: str) -> str:
+    #     return f"skip {offset} limit {limit} order by {order_key} {order}"
 
 
 class AbstractQueryManager(AQMBase, ABC):

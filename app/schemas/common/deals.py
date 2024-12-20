@@ -9,6 +9,7 @@ from app.schemas.utils import convert_date, PaginatedResponse
 
 class BaseDeal(BaseModel):
     name: str | None = None
+    type: str | None = None
     completed_date: Optional[datetime.date] = None
 
     @field_validator('completed_date', mode='before')

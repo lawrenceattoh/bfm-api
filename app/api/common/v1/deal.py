@@ -33,10 +33,6 @@ DealSearchParams = Annotated[dict, Depends(deal_search_params)]
 @router.post('/', response_model=DealResponse)
 async def create_deal(deal: CreateDeal, rms_user=Depends(get_user)):
     deal = ModelDeal.create(params=deal.model_dump(exclude_unset=True), rms_user=rms_user)
-    # Save files in cloud storage
-    # deal.deal_id
-    # save files
-    print(deal)
     return DealResponse(**deal)
 
 
@@ -61,5 +57,14 @@ async def update_deal(deal_id: str, deal: CreateDeal, rms_user=Depends(get_user)
     deal = ModelDeal.update(node_id=deal_id, params={'node_params': deal.model_dump(exclude_unset=True),
                                                      'business_entity_id': business_entity_id},
                             rms_user=rms_user)
-    print(deal)
     return DealResponse(**deal)
+
+
+@router.delete('/{deal_id}')
+async def delete_deal(deal_id: str, rms_user=Depends(get_user)):
+    try:
+        ModelDeal.delete(node_id=deal_id, rms_user=rms_user)
+        return True
+    except Exception as e:
+        print(e)
+        raise Exception(e)

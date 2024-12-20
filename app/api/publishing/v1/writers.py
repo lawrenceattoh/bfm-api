@@ -15,13 +15,15 @@ router = APIRouter(prefix='/v1/writers', tags=['writers'])
 async def writer_search_params(
         _id=Query(None, description="ID of the writer", alias="id", ),
         name=Query(None, description="Name of the writer - will partially match"),
-        ipi=Query(None, description="Writers IPI number")
+        ipi=Query(None, description="Writers IPI number"),
+        workId=Query(None)
 
 ):
     return {
         "id": _id,
         "name": name,
-        "ipi": ipi
+        "ipi": ipi,
+        "work_id": workId
     }
 
 
@@ -41,7 +43,8 @@ async def get_writers(search_params: WriterSearchParams, pagination_params: Pagi
 
 @router.get('/{writer_id}')
 async def get_writer(writer_id: str):
-    writer = ModelWriter.read_one(params={'id': writer_id})
+    writer = ModelWriter.read_one(node_id=writer_id)
+    print(writer, 'I AM WRITER')
     return WriterResponse(**writer)
 
 

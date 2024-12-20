@@ -33,9 +33,9 @@ async def get_publisher(search_params: PublisherSearchParams, pagination_params:
     return {'publishers': []}
 
 
-@router.get('/{pub_id}')
-async def get_publisher(pub_id: str):
-    writer = ModelWriter.read_one(params={'id': pub_id})
+@router.get('/{publisher_id}')
+async def get_publisher(publisher_id: str):
+    writer = ModelWriter.read_one(node_id=publisher_id)
     return PublisherResponse(**writer)
 
 # @router.post('/')

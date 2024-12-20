@@ -1,4 +1,3 @@
-import datetime
 from enum import Enum
 from typing import Optional, List
 
@@ -22,33 +21,12 @@ class RightType(Enum):
 class BaseWork(BaseModel):
     name: str
     iswc: Optional[str] = None
-    reversion_date: Optional[datetime.date] = None
-    territories: Optional[List[str]] = None
 
 
-class RightsHolder(BaseModel):
-    deal_id: str | None
-    id: str | None
-    name: str | None
-    share: float | None
-    ipi: str | None
-    internal_ip_ref: int | None
-
-
-# class RightsHolder(BaseModel):
-#     id: str
-#     share: float | None
-#     # ipi: str
-#     internal_ip_ref: int
-#
-
-class PublisherInfo(RightsHolder):
-    mech_share: Optional[float] = None
-    is_controlled: Optional[bool] = None
-
-
-class WriterInfo(RightsHolder):
-    pass
+class Writer(BaseModel):
+    writer_id: str
+    writer_name: str
+    ipi: str
 
 
 class WorkId(BaseModel):
@@ -56,33 +34,20 @@ class WorkId(BaseModel):
 
 
 class Work(BaseNode, BaseWork, WorkId):
-    publishers: Optional[List[PublisherInfo]] = None
-    writers: Optional[List[WriterInfo]] = None
-
-
-class RightsHolderLite(BaseModel):
-    deal_id: str
-    id: str
-    share: float
-
-
-class PublisherLite(RightsHolderLite):
-    mech_share: Optional[float] = None
-    is_controlled: Optional[bool] = None
-
-
-class WriterLite(RightsHolderLite):
-    pass
+    writers: Optional[List[Writer]] = None
 
 
 class CreateWork(BaseWork):
-    publishers: Optional[List[PublisherLite]] = None
-    writers: Optional[List[WriterLite]] = None
+    writers: Optional[List[Writer]] = None
 
 
 class WorkResponse(Work):
     class Config:
         crm_mode = True
+
+
+class UpdateWork(BaseWork):
+    writers: Optional[List[Writer]] = None
 
 
 class MultiWorkResponse(BaseModel):
@@ -91,6 +56,3 @@ class MultiWorkResponse(BaseModel):
     limit: int
     offset: int
     order: str
-
-
-

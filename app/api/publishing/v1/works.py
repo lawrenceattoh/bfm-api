@@ -4,14 +4,16 @@ from fastapi import APIRouter, Query, Depends
 
 from app.api.utils import PaginationParams, get_user
 from app.models.publishing import ModelWork
-from app.schemas.publishing.work import MultiWorkResponse, WorkResponse, CreateWork
+from app.schemas.publishing.work import MultiWorkResponse, WorkResponse, CreateWork, UpdateWork
 
 router = APIRouter(prefix='/v1/works', tags=['works'])
 
 
 async def work_search_params(
         _id=Query(None, description="ID of the writer", alias="id"),
-        name=Query(None, description="Name of the writer - will partially match"),
+        writer_name=Query(None, description="Name of the writer - will partially match", alias="writerName"),
+        writer_id=Query(None, description="ID of the writer - will partially", alias="writerId"),
+        name=Query(None, description="Name of the work"),
         status=Query(None, description="Writer node status"),
         iswc=Query(None, description="Writers IPI number ")
 
@@ -19,6 +21,8 @@ async def work_search_params(
     return {
         "id": _id,
         "name": name,
+        "writer_name": writer_name,
+        "writer_id": writer_id,
         "status": status,
         "iswc": iswc,
     }
@@ -49,6 +53,12 @@ async def create_work(work: CreateWork, rms_user=Depends(get_user)):
 
 
 @router.patch('/{work_id}')
-async def update_work(work_id: str, work: CreateWork, rms_user=Depends(get_user)):
-    work = ModelWork.update(params={'id': work_id, **work.model_dump()}, rms_user=rms_user)
+async def update_work(work_id: str, work: UpdateWork, rms_user=Depends(get_user)):
+    writers = work.writers if work.writers else []
+    del work.writers
+    writers = [w.model_dump(exclude_unset=True) for w in writers]
+    work = ModelWork.update(node_id=work_id,
+                            params={'node_params': work.model_dump(exclude_unset=True),
+                                    'writers': writers},
+                            rms_user=rms_user)
     return work

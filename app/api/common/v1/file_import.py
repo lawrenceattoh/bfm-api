@@ -68,17 +68,14 @@ def run_import(rights_type: str, data: list, rms_user: str):
 class PublishingRightsType(Enum):
     WRITER_SHARE = 'writer_share'
     PUBLISHER_SHARE = 'publisher_share'
-    ADMINISTRATION_RIGHTS = 'administration_rights'
-    # MECHANICAL_RIGHTS = 'mechanical_rights'
-    # SYNC_RIGHTS = 'sync_rights'
+    ADMINISTRATION = 'administration'
 
 
 class RecordingRightsType(Enum):
     RECORDING_OWNERSHIP = 'recording_ownership'
-    DISTRIBUTION_RIGHTS = 'distribution_rights'
-    # PERFORMANCE_RIGHTS = 'performance_rights'
-    # MERCHANDISING_RIGHTS = 'merchandising_rights'
+    DISTRIBUTION = 'distribution'
     NEIGHBORING_RIGHTS = 'neighboring_rights'
+    ADMINISTRATION = 'administration'
 
 
 class Exclusivity(Enum):
@@ -113,21 +110,27 @@ async def load_file(file: UploadFile = File(),
                          is_controlled=is_controlled,
                          reversion_date=reversion_date
                          )
-    print(territories, 'i am territories')
     res = run_import(main_copyright_type, data, rms_user)
     return 1
 
 
 @router.post('/schedule/recordings')
-async def load_file(file: UploadFile = File(), deal_name: str = Form(), completed_date: datetime.date = Form(),
-                    rights_type: RecordingRightsType = Form(),
-                    business_entity: str = Form(),
+async def load_file(file: UploadFile = File(),
+                    deal_id: str = Form(),  # TODO: Update
+                    right_type: RecordingRightsType = Form(),
+                    is_controlled: bool = Form(),
+                    territories: List[str] = Form(...),
+                    reversion_date: datetime.date = Form(None),
                     rms_user=Depends(get_user)):
     main_copyright_type = 'recording'
     file_content = await file.read()
     file_content_string = file_content.decode('utf-8-sig')
 
-    data = read_csv_file(file_content_string, deal_name=deal_name, completed_date=completed_date,
-                         copyright=copyright, rights_type=rights_type, business_entity=business_entity)
+    data = read_csv_file(file_content_string,
+                         deal_id=deal_id,
+                         right_type=right_type.value,
+                         is_controlled=is_controlled,
+                         territories=territories,
+                         reversion_date=reversion_date)
     res = run_import(main_copyright_type, data, rms_user)
-    return 1
+    return res

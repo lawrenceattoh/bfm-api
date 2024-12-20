@@ -10,7 +10,8 @@ class DealQueryManager(AbstractQueryManager):
     def _create(self) -> str:
         return '''
         merge (d:Deal {name: $params.name}) 
-            set d.completed_date = $params.completed_date
+            set d.completed_date = $params.completed_date, 
+                d.type = $params.type
         '''
 
     @property
@@ -57,6 +58,7 @@ class DealQueryManager(AbstractQueryManager):
         return 
             d.id as id,
             d.name as name,
+            d.type as type, 
             d.completed_date as completed_date,
             be.id as business_entity_id,
         ''' + self.add_base_params('d')

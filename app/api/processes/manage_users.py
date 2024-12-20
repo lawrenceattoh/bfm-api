@@ -10,6 +10,12 @@ def update_user_permissions(email: str, access_level: AccessLevel):
 
 
 def get_users():
+    for user in auth.list_users().users:
+        if user.custom_claims is not None:
+            pass
+        else:
+            auth.set_custom_user_claims(user.uid, {'access_level': 'VIEWER'})
+
     return [{'email': u.email,
              'uid': u.uid,
              'access_level': u.custom_claims.get('access_level')

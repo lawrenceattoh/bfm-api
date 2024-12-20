@@ -3,7 +3,7 @@ from app.models.query_managers.common import BusinessEntityQueryManager, DealQue
 
 
 class Deal(AbstractNode):
-    return_params = ['name', 'completed_date']
+    return_params = ['name', 'completed_date', 'type']
     order_key = 'name'
 
 
@@ -18,4 +18,4 @@ class Copyright(AbstractNode):
 
 
 ModelDeal = Deal(DealQueryManager())
-ModelBusinessEntity= BusinessEntity(BusinessEntityQueryManager())
+ModelBusinessEntity = BusinessEntity(BusinessEntityQueryManager())

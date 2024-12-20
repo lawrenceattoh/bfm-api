@@ -1,8 +1,9 @@
 import os
 
 from fastapi import FastAPI
-from firebase_admin import initialize_app, credentials
+from firebase_admin import initialize_app
 from neomodel import UniqueProperty
+from neomodel import db
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 
@@ -10,17 +11,13 @@ from app.api.common.common_router import router as common_router
 from app.api.exceptions import DoesNotExist
 from app.api.publishing.pub_router import router as publishing_router
 from app.api.rbac.rbac_middleware import RBACMiddleware
+from app.api.recording.rec_router import router as recording_router
+from app.neo_db.config import set_db_url
 
 app = FastAPI()
+set_db_url()
 
-sa_file = '/Users/tristancrudge/Downloads/rms-dev-e3394-firebase-adminsdk-7zstb-3120678b5e.json'  # Local only
-
-cred = credentials.Certificate(sa_file)
-fb = initialize_app(cred)
-
-from neomodel import db, config
-
-config.DATABASE_URL = config.DATABASE_URL = "bolt://neo4j:password@localhost:7687"
+fb = initialize_app(options={'projectId': 'bfm-sandbox'})
 
 proc_generate_node_id = '''
 use system
@@ -58,6 +55,12 @@ with p
 return p
 '''
 
+create_search_index = '''
+CREATE FULLTEXT INDEX nameFulltextIndex if not exists
+FOR (n:Artist|BusinessEntity|Work|Writer|Deal)
+ON EACH [n.name];
+'''
+
 
 # CREATE FULLTEXT INDEX dealSearchIndex
 # FOR (n:Deal)
@@ -67,16 +70,12 @@ return p
 # create index for (n:BusinessEntity) ON (n.id, n.name)
 
 
-
-
 def init_procedures():
     print('running init procedures')
     db.cypher_query(proc_generate_node_id)
     db.cypher_query(proc_generate_custom_id)
     db.cypher_query(create_bfm_publisher)
-
-
-# fb = initialize_app()
+    db.cypher_query(create_search_index)
 
 
 @app.exception_handler(UniqueProperty)
@@ -95,7 +94,7 @@ async def does_not_exist_exception_handler(request, exc):
     )
 
 
-# os.environ["ENVIRONMENT"] = "prod"
+# os.environ['ENVIRONMENT'] = 'prod'
 if os.environ.get("ENVIRONMENT") == "prod":
     # app.dependency_overrides[check_user_firebase_auth] = check_user_firebase_auth
     app.add_middleware(RBACMiddleware)
@@ -111,7 +110,6 @@ app.add_middleware(
         "http://127.0.0.1:5000",
         "http://localhost:5173",
         "http://localhost:5174",
-        "https://rms-dev-e3394.web.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -122,3 +120,4 @@ init_procedures()
 
 app.include_router(publishing_router, prefix='/api')
 app.include_router(common_router, prefix="/api")
+app.include_router(recording_router, prefix="/api")
