@@ -13,15 +13,15 @@ async def deal_search_params(
         _id: Optional[str] = Query(None, description="ID of the deal", alias="id"),
         name: Optional[str] = Query(None, description="Deal name"),
         business_entity_id: Optional[str] = Query(None, alias="businessEntityId"),
-        rights_type: Optional[List[str]] = Query(None, description="Rights type associated with deal",
-                                                 alias="rights-type"),
+        deal_type: Optional[List[str]] = Query(None, description="Rights type associated with deal",
+                                               alias="dealType"),
         writer_id: Optional[str] = Query(None, description="Writer ID")
 
 ):
     return {
         "id": _id,
         "name": name,
-        "rights_type": rights_type,
+        "deal_type": deal_type,
         "business_entity_id": business_entity_id,
         "writer_id": writer_id
     }

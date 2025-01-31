@@ -1,10 +1,11 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query, Depends, HTTPException
 
 from app.api.utils import PaginationParams, get_user
 from app.models.publishing import ModelWork
 from app.schemas.publishing.work import MultiWorkResponse, WorkResponse, CreateWork, UpdateWork
+from app.schemas.utils import DeleteResponse
 
 router = APIRouter(prefix='/v1/works', tags=['works'])
 
@@ -62,3 +63,14 @@ async def update_work(work_id: str, work: UpdateWork, rms_user=Depends(get_user)
                                     'writers': writers},
                             rms_user=rms_user)
     return work
+
+
+@router.delete('/{work_id}', response_model=DeleteResponse)
+async def delete_work(work_id: str):
+    try:
+        w = ModelWork.delete(work_id)
+        if w:
+            return DeleteResponse(id=work_id, entity_type='Work', message='Work deleted')
+        return DeleteResponse(id=work_id, entity_type='Work', message='Work does not exist or is already deleted')
+    except Exception as e:
+        raise HTTPException(status_code=500)

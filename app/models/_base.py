@@ -57,6 +57,7 @@ class AbstractNode(ABC):
 
     def create(self, *, neodb=db, params: dict = None, rms_user: str = None):
         q = self.query_manager.create()
+        print(q)
         result, schema = neodb.cypher_query(q, {'params': params, 'rms_user': rms_user})
         response = parse_neo_response(result, schema)
         return response
@@ -71,7 +72,9 @@ class AbstractNode(ABC):
         read_all_count = self.query_manager.read_all_count()
         row_count_result, _ = neodb.cypher_query(read_all_count, {'params': search_params})
         row_count = row_count_result[0][0]
+
         q = self.query_manager.read_all()
+        print(q)
         order_key = f'{self.query_manager.alias}.{self.order_key}' if '.' not in self.order_key else self.order_key
         pq = jinja2.Template(_add_pagination).render(
             q=q, order_key=f'{order_key}', **pagination_params
@@ -89,6 +92,7 @@ class AbstractNode(ABC):
 
     def delete(self, node_id, *, neodb=db, rms_user: str = None):
         q = self.query_manager.delete()
+        print(q)
         result, schema = neodb.cypher_query(q, {'id': node_id, 'rms_user': rms_user})
         response = parse_neo_response(result, schema)
         return response

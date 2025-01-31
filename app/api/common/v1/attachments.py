@@ -1,12 +1,13 @@
 import datetime
+import json
 import logging
 import os
 from typing import List
 
 import requests
 from fastapi import APIRouter, File, UploadFile, HTTPException, Form, Depends, Query
-from google.auth import default
 from google.cloud import storage
+from google.oauth2 import service_account
 from neomodel import db
 from pydantic import BaseModel, field_validator
 
@@ -18,12 +19,18 @@ from app.schemas.utils import convert_datetime
 router = APIRouter(prefix="/v1/attachments", tags=["attachments"])
 
 BUCKET_NAME = "bfm-digital-master-store"
-sa_email = os.environ.get("SA_EMAIL")
-
-credentials, project = default()
-client = storage.Client(credentials=credentials)
 
 logger = logging.getLogger(__name__)
+
+if os.environ.get('ENVIRONMENT', 'dev') == 'prod':
+    sa = json.loads(os.environ.get('service_account'))
+    creds = service_account.Credentials.from_service_account_info(sa)
+
+
+def create_client():
+    if os.environ.get('ENVIRONMENT', 'dev') == 'prod':
+        return storage.Client(credentials=creds)
+    return storage.Client()
 
 
 def set_expiry():
@@ -48,16 +55,21 @@ async def merge_with_db(entity_id: str, attachment_type: str, attachment_categor
         raise HTTPException(status_code=500, detail="Database merge failed")
 
 
-async def upload_to_gcs(node_label, entity_id, attachment_type, attachment_category, file: UploadFile, filename: str):
+async def upload_to_gcs(node_label, entity_id, attachment_type, attachment_category, file: UploadFile, filename: str,
+                        client):
     try:
+        print(client)
+        print(type(client))
         bucket = client.bucket(BUCKET_NAME)
         storage_path = f"{node_label}/{entity_id}/{attachment_category}/{attachment_type}/{filename}"
         blob = bucket.blob(storage_path)
 
-        signed_url = blob.generate_signed_url(expiration=set_expiry(), method="PUT",
-                                              version="v4",
-                                              service_account_email=credentials.service_account_email,
-                                              access_token=credentials.token)
+        signed_url = blob.generate_signed_url(
+            expiration=set_expiry(),
+            method="PUT",
+            version="v4",
+            credentials=creds if os.environ.get('environment', 'dev') == 'prod' else None,
+        )
         res = requests.put(signed_url, data=file.file)
         if res.status_code != 200:
             raise Exception(f"Upload failed for {filename}: {res.content}")
@@ -78,6 +90,7 @@ async def upload_attachments(
         filenames: List[str] = Form(...),
         files: List[UploadFile] = File(...),
         rms_user: str = Depends(get_user),
+        client=Depends(create_client)
 ):
     if len(files) != len(filenames) or len(files) != len(categories) or len(files) != len(types):
         raise HTTPException(
@@ -93,6 +106,7 @@ async def upload_attachments(
                 attachment_category=attachment_category,
                 file=file,
                 filename=filename,
+                client=client
             )
 
             await merge_with_db(

@@ -1,19 +1,19 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
 from ..base_node import BaseNode
 
 
-class Artist(BaseModel):
-    id: str
-    artist_name: str
-    artist_id: str
-
-
+# class Artist(BaseModel):
+#     id: str
+#     artist_name: str
+#     artist_id: str
+#
+#
 class BaseTrack(BaseModel):
     name: str
-    artist_name: str
+    artist_name: Optional[str] = None  # For searching only
     artist_id: str
 
 

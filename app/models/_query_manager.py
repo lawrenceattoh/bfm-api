@@ -76,6 +76,7 @@ class AbstractQueryManager(AQMBase, ABC):
         """
 
     def delete(self) -> str:
+        print('deleting')
         return f"""
         {self._read_one}
         set {self.alias}.is_deleted = True,
